@@ -1,98 +1,110 @@
-import axios from 'axios';
-import { useState } from 'react/cjs/react.development';
+import React, { Component } from 'react';
 import './App.css';
+import { BrowserRouter, Route, Link } from 'react-router-dom';
+import axios from 'axios';
 
-function App() {
-  const [file, set_file] = useState();
-  const [previewURL, set_previewURL] = useState();
+import {Home, Test} from './inc'
 
-  const [object_name, set_object_name] = useState();
-
-  const handleFileOnChange = (event) => {
-    event.preventDefault();
-    let reader = new FileReader();
-    let file = event.target.files[0];
-    reader.onloadend = () => {
-      set_file(file);
-      set_previewURL(reader.result);
+class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      name: '',
+      list: [],
+      update: false,
     }
-    reader.readAsDataURL(file);
   }
 
-  const send_image_options = {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify({
-      name: file,
-      data: previewURL,
+  componentDidMount() {
+    // this._getData();
+  }
+
+  _addData = async (e) => {
+    const { name } = this.state;
+    e.preventDefault();
+
+    const res = await axios('/add/data', {
+      method: 'POST',
+      data: { 'data': name },
+      headers: new Headers()
     })
-  }
-  const option = {
-    url:'http://221.158.52.168:3003/send',
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
-    body: JSON.stringify({
-      name: file,
-      data: previewURL,
-    })
-  }
-  const send_image = () => {
-    console.log('send image');
-    // fetch('http://221.158.52.168:3003/send', send_image_options)
-    //   .then(res => res.json())
-    //   .then(res => {
-    //     console.log(res.message);
-    //   })
-    //   .catch(err => {
-    //     console.log('send image 문제');
-    //   })
-    axios(option).then(res=>res.json()).then(res => console.log(res));
-  }
-  const detect_image_options = {
-    method: 'POST',
-    headers: {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      name: file,
-    }),
-  }
-  const detect_image = () => {
-    console.log('detect image');
-    fetch('http://221.158.52.168:3003/detect', detect_image_options)
-      .then(res => res.json())
-      .then(res => {
-        set_object_name(res.Res);
-      })
-      .catch(err => {
-        console.log('detect error');
-      })
+
+    if (res.data) {
+      alert('데이터를 추가했습니다.');
+      return window.location.reload();
+    }
   }
 
-  let preview = null;
-  if (file != '') {
-    preview = <img src={previewURL} />
+  _nameUpdate(e) {
+    this.setState({ name: e.target.value })
   }
 
-  return (
-    <div className="App">
-      <div>
-        <input type='file' accept='image/jpg,image/png,image/jpeg,image/gif' name='profile_img' onChange={handleFileOnChange} />
+  _getData = async () => {
+    const res = await axios.get('/get/data');
+
+    if (res.data[0] === undefined) {
+      let cover = [];
+      cover.push(res.data);
+
+      return this.setState({ list: cover })
+    }
+    this.setState({ list: res.data });
+  }
+
+  render() {
+    // const { list } = this.state;
+
+    return (
+      //   <div className='App'>
+      //     <h3> Welcome to <u> sejun </u> Blog! </h3>
+      //     <h5> https://sejun3278.blog.me/ </h5>
+
+      //     <br />
+      //     <form method='POST' onSubmit={this._addData}>
+      //       <input type='text' maxLength='10' onChange={(e) => this._nameUpdate(e)} />
+      //       <input type='submit' value='Add' />
+      //     </form>
+
+      //     <br /> <br />
+      //     <div style={{ height: '250px', overflow: 'auto' }}>
+      //       <h4 style={{ color: '#ababab' }}> Teachers List </h4>
+
+      //       <div style={{ border: 'solid 1px black', width: '50%', marginLeft: '25%', textAlign: 'left' }}>
+      //         <div style={{ display: 'grid', gridTemplateColumns: '32% 35% 30%', textAlign: 'center' }}>
+      //           <div> Number </div>
+      //           <div> Name </div>
+      //           <div> Other </div>
+      //         </div>
+      //       </div>
+
+      //       {list.length !== 0
+      //         ? list.map((el, key) => {
+      //           return (
+      //             <div key={key} style={{ display: 'grid', lineHeight: '40px', gridTemplateColumns: '32% 35%', width: '50%', marginLeft: '25%' }}>
+      //               <div> {el.id} </div>
+      //               <div> {el.name} </div>
+      //             </div>
+      //           )
+      //         })
+
+      //         : null}
+      //     </div>
+      //   </div>
+      <div className='App'>
+        <BrowserRouter>
+          <Route path="/" component={Home} exact />
+          <Route path="/test" component={Test} exact />
+          <Route path="/test/:data" component={Test} />
+          <ul>
+            <li><Link to='/'>Home</Link></li>
+            <li><Link to='/test'>Test</Link></li>
+          </ul>
+        </BrowserRouter>
       </div>
-      {preview}
-      <button onClick={() => send_image()}>사진 전송</button>
-      <button onClick={() => detect_image()}>물체 인식</button>
-    </div>
-  );
+    )
+
+
+  }
 }
 
 export default App;
